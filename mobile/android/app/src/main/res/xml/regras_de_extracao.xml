@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  O que NÃO pode sair deste aparelho.
+
+  O token de sessão do sócio mora em SharedPreferences (chave `kadosh_token`), que é um XML em
+  texto puro no diretório do app. Com o backup automático ligado — o padrão do Android — esse
+  arquivo sobe para o Google Drive da conta do aparelho e viaja na transferência para um celular
+  novo. Quem restaurasse esse backup em outro aparelho passaria a chamar a API COMO o sócio:
+  lançar pagamento, estornar, ver caixa, extrato e o telefone de todos os clientes. Nada no
+  servidor distinguiria esse acesso do aparelho legítimo.
+
+  `android:allowBackup="false"` no manifesto cobre o Android 11 e anteriores. Do 12 em diante quem
+  manda são estas regras, e são DUAS: `cloud-backup` (Google Drive) e `device-transfer` (a cópia
+  direta de celular para celular na configuração inicial). Desligar só a primeira deixaria a
+  segunda aberta.
+
+  O efeito prático para o sócio é entrar de novo com e-mail e senha ao trocar de aparelho — o que
+  é exatamente o comportamento desejado.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" />
+    </device-transfer>
+</data-extraction-rules>

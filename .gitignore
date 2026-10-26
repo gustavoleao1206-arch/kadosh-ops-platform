@@ -1,0 +1,38 @@
+# --- geral ---
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+
+# --- python / backend ---
+backend/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+backend/htmlcov/
+backend/.coverage
+
+# --- web ---
+web/node_modules/
+web/dist/
+web/.vite/
+
+# --- flutter / android ---
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/app/upload-keystore.jks
+*.jks
+*.keystore
+
+# --- banco local (fica fora do repositório) ---
+pgdata/
+backups/

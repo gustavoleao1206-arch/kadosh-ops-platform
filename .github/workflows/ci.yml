@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kadosh
+          POSTGRES_PASSWORD: kadosh_dev
+          POSTGRES_DB: kadosh_test
+          # mesmo locale do ambiente local (initdb --locale=C) para ordenação idêntica
+          POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kadosh"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://kadosh:kadosh_dev@localhost:5433/kadosh_test
+      TEST_DATABASE_URL: postgresql+psycopg://kadosh:kadosh_dev@localhost:5433/kadosh_test
+      ENV: test
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Migrations aplicam do zero, batem com os modelos e revertem
+        run: |
+          python -m alembic upgrade head
+          python -m alembic check
+          python -m alembic downgrade base
+          python -m alembic upgrade head
+      # O piso existe para pegar a regressão grande — um serviço inteiro entrando sem teste —,
+      # não para perseguir 100%. Hoje a cobertura real é 97%; a folga é de propósito, senão o
+      # número vira a meta e alguém escreve teste para a linha, não para o comportamento.
+      - name: Testes (com piso de cobertura)
+        run: python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=95
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Typecheck + build
+        run: npm run build
+      - name: Testes
+        run: npm test
+
+  # Só análise e testes: o .apk é gerado na máquina do dono, assinado com a chave dele, que não
+  # entra no repositório. O CI existe aqui para o app não passar quebrado despercebido.
+  mobile-analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.2"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Análise estática
+        run: flutter analyze
+      - name: Testes
+        run: flutter test

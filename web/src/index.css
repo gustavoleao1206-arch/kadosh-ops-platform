@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+/* Fontes da marca, self-hosted (a CSP do backend não abre para domínios externos) */
+@import '@fontsource/cormorant-garamond/500.css';
+@import '@fontsource/cormorant-garamond/600.css';
+@import '@fontsource/oswald/300.css';
+@import '@fontsource/oswald/400.css';
+@import '@fontsource/oswald/500.css';
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+
+/* Paleta do painel: conteúdo claro (papel) + barra lateral obsidiana + ouro só em acentos */
+@theme {
+  --color-paper: #f7f6f2;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1efe9;
+  --color-ink: #1c1c22;
+  --color-ink-2: #4f4c45;
+  --color-muted: #8a867c;
+  --color-line: #e6e3dc;
+  --color-gold: #b8902f;
+  --color-gold-deep: #8f6f1c;
+  --color-gold-wash: #f6efdd;
+  --color-obsidian: #0b0b0d;
+  --color-carbon: #1c1c22;
+  --color-champagne: #d8bd7e;
+  --color-ivory: #ece6d8;
+  --color-ok: #2f7a4b;
+  --color-ok-wash: #e6f2ea;
+  --color-warn: #a8651b;
+  --color-warn-wash: #f8ecdd;
+  --color-danger: #b23a3a;
+  --color-danger-wash: #f8e3e3;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-label: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-sans: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+
+  --shadow-card: 0 1px 2px rgb(28 28 34 / 0.05), 0 6px 20px rgb(28 28 34 / 0.05);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-paper text-ink font-sans antialiased;
+  font-size: 14.5px;
+}
+
+/* Rótulo em caixa alta com tracking — a assinatura tipográfica da marca */
+.label {
+  @apply font-label uppercase text-[11px] tracking-[0.26em] text-gold-deep;
+}
+.label-dim {
+  @apply font-label uppercase text-[11px] tracking-[0.22em] text-muted;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Campos de formulário.
+
+   DENTRO de `@layer components` de propósito. O Tailwind v4 usa camadas nativas do CSS, e regra
+   sem camada vence qualquer regra com camada — então um `.input` solto ganhava do `pl-9` que os
+   campos de busca usam para abrir espaço ao ícone, e a lupa ficava POR CIMA do texto. Estava assim
+   em oito campos (busca global, clientes, veículos, serviços, OS, recepção, MoneyInput).
+   Na camada `components`, os utilitários passam a vencer — que é a ordem que se espera ao escrever
+   `className="input pl-9"`. */
+@layer components {
+  .input {
+    @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-[14px] text-ink outline-none transition;
+    @apply placeholder:text-muted focus:border-gold focus:ring-2 focus:ring-gold/25 disabled:opacity-60;
+  }
+}
+
+::selection {
+  background: #e9d9a8;
+}
+
+/*
+  Área segura do iPhone (Face ID e barra de gestos).
+
+  Com `viewport-fit=cover` no index.html, a página passa a ocupar a tela INTEIRA — inclusive
+  debaixo da faixa de status e da barra inferior. Sem devolver esse espaço, o cabeçalho fica meio
+  escondido atrás do relógio e o rodapé de qualquer tela some sob a barra de gestos.
+
+  As variáveis valem 0 em qualquer aparelho sem recorte, então isto não afeta o computador.
+*/
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/*
+  O Safari do iPhone aumenta o zoom sozinho quando um campo com fonte menor que 16px recebe foco —
+  e não desfaz o zoom ao sair. O resultado é a tela travada torta no meio de um lançamento de
+  pagamento. Fixar 16px nos campos em telas de toque resolve na origem.
+*/
+@media (max-width: 1023px) {
+  .input,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

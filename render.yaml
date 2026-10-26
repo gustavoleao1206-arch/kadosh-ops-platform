@@ -1,0 +1,74 @@
+# Infraestrutura do Kadosh Ops, versionada junto com o código.
+#
+# Existe para que subir de novo (outra conta, outra região, depois de um desastre) seja um passo e
+# não uma tarde de cliques lembrados de memória. O painel do Render lê este arquivo e cria o banco
+# e o serviço já configurados.
+#
+# NENHUM SEGREDO AQUI. A URL do banco vem do próprio Render (`fromDatabase`) e a senha do primeiro
+# administrador é gerada por ele (`generateValue`). Não há chave de assinatura a guardar: a sessão
+# é opaca em tabela, não JWT — não há nada para assinar.
+
+databases:
+  - name: kadosh-db
+    databaseName: kadosh
+    user: kadosh
+    # Virgínia é a região mais próxima de Maceió entre as que o Render oferece.
+    # O serviço e o banco PRECISAM ficar na mesma: em regiões diferentes o tráfego sai para a
+    # internet, some a rede privada e cada consulta ganha dezenas de milissegundos.
+    region: virginia
+    # O menor plano PAGO. O gratuito expira em 30 dias e leva o banco junto — inaceitável para
+    # dados financeiros de uma loja. Subir de plano depois é um clique, sem downtime.
+    plan: basic-256mb
+    postgresMajorVersion: "16"
+    # Só o serviço fala com o banco, pela rede privada do Render. Sem esta linha o Render aceita
+    # conexão de QUALQUER IP da internet (protegida só pela senha), e o painel ainda pode ganhar uma
+    # regra "temporária" que ninguém lembra de tirar — configuração de painel muda sem deixar rastro
+    # no Git. Lista vazia aqui é o estado permanente, versionado. Para um pg_dump direto (ver
+    # scripts/backup.ps1): libere o seu IP em kadosh-db → Networking, rode e apague a regra.
+    ipAllowList: []
+
+services:
+  - type: web
+    name: kadosh-ops
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: virginia
+    plan: starter
+    branch: main
+    # Sobe sozinho a cada push na main, que já passou pelo CI (backend, painel e app).
+    autoDeploy: true
+
+    # O Render só considera o deploy bom quando esta rota responde 200. Ela consulta o banco, então
+    # um serviço que sobe sem conseguir falar com o Postgres é reprovado e o Render mantém a versão
+    # anterior servindo, em vez de trocar por uma que não funciona.
+    healthCheckPath: /api/v1/health
+
+    # Migrações ANTES de trocar a versão em produção. Se o `upgrade head` falhar, o deploy é
+    # abortado e a versão antiga continua no ar — em vez de subir um código novo contra um banco
+    # velho, que é como se perde dado.
+    preDeployCommand: python -m alembic upgrade head
+
+    envVars:
+      - key: ENV
+        value: production   # o próprio app se recusa a subir no Render sem isto
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kadosh-db
+          property: connectionString
+
+      # Primeiro administrador. Só é usado quando a tabela de usuários está VAZIA: um redeploy
+      # nunca devolve a senha antiga, e a conta nasce exigindo troca de senha no primeiro login.
+      # A senha é gerada pelo Render — leia-a em Environment e REMOVA as duas variáveis depois de
+      # entrar. Deixá-las não reabre nada (a tabela já não está vazia), mas guardar senha em
+      # variável de ambiente sem motivo é dívida esperando a próxima pessoa.
+      - key: ADMIN_EMAIL
+        value: admin@example.com
+      - key: ADMIN_PASSWORD
+        generateValue: true
+
+      # Fuso do negócio: "hoje", "este mês" e o corte de atraso são calculados nele, não no UTC do
+      # servidor. Um Pix das 22h em Maceió é do dia seguinte em UTC — sem isto o caixa fecharia no
+      # dia errado todas as noites.
+      - key: APP_TIMEZONE
+        value: America/Maceio

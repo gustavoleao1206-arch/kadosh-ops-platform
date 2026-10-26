@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!--
+      viewport-fit=cover + as variáveis safe-area do CSS: sem isto, no iPhone com Face ID o
+      conteúdo passa por baixo da faixa de status e da barra inferior de gestos. É o detalhe que
+      separa "site aberto no celular" de "aplicativo".
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+
+    <!--
+      Instalável na tela de início. No iPhone o caminho é Safari → Compartilhar → "Adicionar à Tela
+      de Início": abre em tela cheia, sem barra do Safari, com ícone próprio — e sem Mac, sem conta
+      de desenvolvedor Apple e sem expirar a cada 7 dias, que é o que um app nativo exigiria.
+
+      apple-touch-icon precisa ser PNG: o iOS ignora SVG aqui e, sem ele, usa uma miniatura da
+      página como ícone. Gerado por scripts/gerar-icones.py.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Kadosh" />
+    <!-- barra de status escrita sobre o obsidiana do cabeçalho, em vez de uma faixa branca solta -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0B0B0D" />
+
+    <title>Kadosh Ops</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

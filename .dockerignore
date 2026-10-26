@@ -1,0 +1,37 @@
+# O que NÃO entra na imagem.
+#
+# Além de deixar o build mais rápido, isto é segurança: `backend/.env` tem a senha do banco local e
+# o `.git` tem o histórico inteiro. Nenhum dos dois tem o que fazer dentro de um contêiner que roda
+# na internet — e um `COPY backend/ ./` sem esta lista levaria os dois junto.
+
+.git
+.gitignore
+.gitattributes
+.github
+
+# segredos e estado local
+**/.env
+**/.env.*
+!**/.env.example
+*.log
+
+# ambientes e caches de desenvolvimento
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+**/node_modules
+
+# o painel é COMPILADO no estágio Node; copiar um dist local mascararia um build quebrado
+web/dist
+
+# o app não faz parte da imagem do servidor (o APK é gerado na máquina do dono)
+mobile
+
+# scripts de máquina local (PowerShell, emulador, banco portátil)
+scripts
+
+docs
+README.md

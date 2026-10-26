@@ -1,0 +1,69 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sem esta linha o APK de RELEASE não abre socket nenhum.
+
+         O template do Flutter declara INTERNET só em src/debug e src/profile, "para
+         desenvolvimento" — então o release sai sem ela. O app instala, abre, desenha tudo, e
+         morre em "Sem conexão com o servidor." para sempre, sem pista nenhuma de que o problema
+         é permissão. Um app que fala com uma API precisa disso no manifesto principal.
+
+         Como conferir que continua lá:
+           aapt2 dump permissions app-release.apk -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- allowBackup="false": o token de sessão do sócio fica em SharedPreferences (texto puro),
+         e com o backup ligado — que é o PADRÃO do Android — esse arquivo sobe para o Google Drive
+         e viaja para o celular novo. Quem restaurasse o backup entraria como o sócio.
+         As três linhas fazem a mesma coisa em versões diferentes do Android: allowBackup e
+         fullBackupContent valem até o 11, dataExtractionRules do 12 em diante (e lá são DUAS
+         regras: nuvem e transferência direta — ver res/xml/regras_de_extracao.xml).
+         Como conferir no APK pronto:
+           aapt2 dump badging app-release.apk | findstr allowBackup   (não deve dizer 'true') -->
+
+    <application
+        android:label="kadosh_campo"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/regras_de_extracao">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+</manifest>
